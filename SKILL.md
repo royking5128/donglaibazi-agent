@@ -27,8 +27,14 @@ metadata:
 
 ```bash
 SKILL_DIR="$HOME/.box-agent/skills/donglaibazi-agent"
-PYTHON="python3"   # Hermes 环境的 Python；若 import lunar_python 失败则先 pip install lunar-python
+PYTHON="python3"
 ```
+
+> **Windows / 本机 Hermes 环境**：脚本真实路径如下，用 PowerShell 执行，把下面 `$SKILL_DIR`、`$PYTHON` 代入本文所有命令：
+> ```powershell
+> $SKILL_DIR = "C:\Users\waiti\AppData\Local\Hermes Agent CN Desktop\data\hermes-home\skills\东来的常用skills\donglaibazi-agent"
+> $PYTHON = "python"   # 首次需 pip install lunar-python
+> ```
 
 首次使用检查依赖（lunar-python）：
 
