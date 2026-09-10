@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>八字契约界面</title>
+<style>
+:root{--bg:#f7f4ee;--card:#fffdf8;--ink:#2b2620;--muted:#8a8378;--accent:#b3541e;--green:#3a6b5e;--line:#e5ddcf;--bad:#a33b2e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Noto Serif SC",serif;background:var(--bg);color:var(--ink);line-height:1.7;height:100vh;overflow:hidden}
+.header{height:60px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);background:var(--card)}
+.header h1{font-size:21px;letter-spacing:4px;font-weight:600}
+.header p{color:var(--muted);font-size:12px;margin-left:14px;letter-spacing:2px}
+.main{display:flex;height:calc(100vh - 60px - 58px)}
+/* 左栏 */
+.left{width:42%;padding:26px 30px;overflow-y:auto;border-right:1px solid var(--line)}
+.left h2{font-size:16.5px;color:var(--accent);letter-spacing:2px;margin-bottom:16px}
+label{display:block;font-size:13.5px;margin:13px 0 5px}
+label small{color:var(--muted)}
+.row{display:flex;gap:10px}
+.row>div{flex:1}
+input,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:14.5px;font-family:inherit;background:#fff}
+input:focus,select:focus{outline:none;border-color:var(--green)}
+input:disabled{opacity:.5;background:#f0ece4}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:13px;font-size:14px}
+.chk input{width:15px;height:15px}
+.btn-confirm{display:block;width:100%;margin-top:20px;background:var(--green);color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-family:inherit;cursor:pointer;letter-spacing:4px}
+.btn-confirm:hover{opacity:.9}
+.btn-confirm:disabled{opacity:.4;cursor:not-allowed}
+.err{color:var(--bad);font-size:13px;margin-top:8px}
+/* 右栏 */
+.right{width:58%;padding:26px 30px 0;overflow-y:auto}
+.right h2{font-size:16.5px;color:var(--accent);letter-spacing:2px}
+.right .desc{font-size:12.5px;color:var(--muted);margin:5px 0 12px}
+/* 档位选择器（冻结吸顶：滚动选择年份时固定不动） */
+.mode-bar{display:flex;gap:10px;margin-bottom:12px;position:sticky;top:-26px;z-index:10;padding:8px 0 10px;background:linear-gradient(to bottom, var(--bg) 82%, transparent)}
+.mode{flex:1;border:2px solid var(--line);border-radius:8px;padding:8px 10px;text-align:center;font-size:14.5px;cursor:pointer;background:var(--card);user-select:none;transition:all .15s;box-shadow:0 1px 3px rgba(60,50,30,.08)}
+.mode .sub{display:block;font-size:11px;color:var(--muted)}
+.mode.m-good.on{border-color:var(--green);background:#e7efe9;color:var(--green);font-weight:600}
+.mode.m-bad.on{border-color:var(--bad);background:#f5e4e0;color:var(--bad);font-weight:600}
+.mode.m-erase.on{border-color:var(--muted);background:#efece5}
+/* 年份网格 */
+.years{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.yn{border:1.5px solid var(--line);border-radius:8px;background:var(--card);cursor:pointer;user-select:none;text-align:center;padding:7px 4px;transition:all .12s}
+.yn .y{font-size:15px;font-weight:600}
+.yn .g{font-size:10.5px;color:var(--muted);margin-top:1px}
+.yn.on-good{border-color:var(--green);background:#e7efe9}
+.yn.on-bad{border-color:var(--bad);background:#f5e4e0}
+.yn:hover{transform:translateY(-1px)}
+.placeholder{padding:60px 20px;text-align:center;color:var(--muted);font-size:14px}
+.section-gap{height:26px;border-bottom:1px dashed var(--line);margin-bottom:20px}
+/* 月份 */
+.months{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.mn{border:1.5px solid var(--line);border-radius:8px;background:var(--card);cursor:pointer;user-select:none;text-align:center;padding:8px 4px;transition:all .12s}
+.mn .y{font-size:14.5px;font-weight:600}
+.mn .g{font-size:10.5px;color:var(--muted)}
+.mn.on-good{border-color:var(--green);background:#e7efe9}
+.mn.on-bad{border-color:var(--bad);background:#f5e4e0}
+.mn:hover{transform:translateY(-1px)}
+/* 底部 */
+.footer{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 30px;border-top:1px solid var(--line);background:var(--card)}
+.footer .sum{font-size:13px;color:var(--muted)}
+button.submit{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:12px 44px;font-size:15px;font-family:inherit;cursor:pointer;letter-spacing:3px}
+button.submit:hover{opacity:.92}
+button.submit:disabled{opacity:.45;cursor:not-allowed}
+/* 结果弹层 */
+#resultOverlay{position:fixed;inset:0;background:rgba(43,38,32,.55);display:none;align-items:center;justify-content:center;z-index:99}
+#resultBox{width:min(920px,92vw);max-height:88vh;overflow-y:auto;background:var(--bg);border-radius:12px;padding:28px 34px}
+#resultBox h3{color:var(--accent);letter-spacing:2px;margin:16px 0 8px;font-size:15.5px}
+#resultBox pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;font-size:12.5px;white-space:pre-wrap;max-height:420px;overflow-y:auto}
+</style>
+</head>
+<body>
+<div class="header"><h1>八字深度分析 · 契约界面</h1><p>填写生辰 → 确认 → 勾选年份与月份 → 交给命理 agent</p></div>
+
+<div class="main">
+  <!-- ============ 左栏：生辰契约 ============ -->
+  <div class="left">
+    <h2>一、生辰契约</h2>
+    <div class="row">
+      <div><label>日历</label>
+        <select id="calType"><option value="gregorian">阳历（公历）</option><option value="lunar">农历（阴历）</option></select></div>
+      <div><label>闰月 <small>（农历）</small></label>
+        <select id="leap"><option value="false">否</option><option value="true">是</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>年</label><input id="byear" type="number" placeholder="1990" min="1900" max="2100"></div>
+      <div><label>月</label><input id="bmonth" type="number" min="1" max="12" placeholder="11"></div>
+      <div><label>日</label><input id="bday" type="number" min="1" max="31" placeholder="7"></div>
+    </div>
+    <div class="row">
+      <div><label>时（0-23）</label><input id="bhour" type="number" min="0" max="23" placeholder="15"></div>
+      <div><label>分（0-59）</label><input id="bmin" type="number" min="0" max="59" placeholder="30"></div>
+    </div>
+    <div class="chk">
+      <input type="checkbox" id="hourUnknown">
+      <span>时辰不详（按正午中点排盘，时柱仅供参考）</span>
+    </div>
+    <div class="row">
+      <div><label>性别</label><select id="gender"><option>男</option><option>女</option></select></div>
+      <div><label>出生地 <small>（真太阳时校正）</small></label><input id="city" placeholder="如：上海"></div>
+    </div>
+    <button class="btn-confirm" id="btnConfirm" disabled>确 认 生 辰</button>
+    <p class="hint">※ 点确认后，右侧生成可选年份。※ 数据仅存本地，不上传。</p>
+    <div class="err" id="errForm"></div>
+  </div>
+
+  <!-- ============ 右栏：年份 + 月份契约 ============ -->
+  <div class="right">
+    <h2 style="position:sticky;top:-26px;z-index:11;background:var(--bg);padding:0 0 4px;margin:0 0 6px">二、人生节律契约 · 年份</h2>
+    <p class="desc">按您的出生年份自动列出（出生年为终点，往前约 20 年）。先选档位，再点年份框上色（档位已冻结，滚动时不动）。</p>
+
+    <div class="mode-bar" id="yearModeBar">
+      <div class="mode m-good on" data-mode="good">顺 <span class="sub">默认 · 绿色</span></div>
+      <div class="mode m-bad" data-mode="bad">不顺 <span class="sub">红色</span></div>
+      <div class="mode m-erase" data-mode="erase">擦除 <span class="sub">点掉选错的</span></div>
+    </div>
+
+    <div id="yearsGrid"><div class="placeholder">请先在左侧填写完整生辰，点「确认生辰」</div></div>
+
+    <div class="section-gap"></div>
+
+    <h2>三、月份契约</h2>
+    <p class="desc">过去 10 年，您一般在阳历的<b>几月比较顺</b>，<b>几月比较不顺</b>？（选档位后点月份框，可不选）</p>
+
+    <div class="mode-bar" id="monthModeBar" style="position:sticky;top:-26px;z-index:10">
+      <div class="mode m-good on" data-mode="good">顺 <span class="sub">绿色</span></div>
+      <div class="mode m-bad" data-mode="bad">不顺 <span class="sub">红色</span></div>
+      <div class="mode m-erase" data-mode="erase">擦除 <span class="sub">点掉选错的</span></div>
+    </div>
+
+    <div class="months" id="monthsGrid"></div>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="sum" id="summary">先在左侧填写生辰并确认</span>
+  <button class="submit" id="btnSubmit" disabled>立 约</button>
+</div>
+
+<div id="resultOverlay"><div id="resultBox">
+  <h3>① 排盘结果（JSON · 计算层输出）</h3><pre id="chartOut"></pre>
+  <h3>② 经历校准（JSON · Phase 2 输出）</h3><pre id="calibOut"></pre>
+  <h3>③ 月份契约（供 agent 解读月令节奏）</h3><pre id="monthsOut"></pre>
+  <p class="hint" style="margin-top:14px">※ 把以上 JSON 交给命理 agent，即可生成四层深度报告。</p>
+  <div style="text-align:center;margin-top:16px"><button class="submit" onclick="document.getElementById('resultOverlay').style.display='none'">关闭</button></div>
+</div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let meta = {current_year: new Date().getFullYear()};
+let yearMode = 'good', monthMode = 'good';
+let confirmed = false, birthYear = null;
+
+// ---- 档位切换（年份 / 月份两组独立）----
+function bindModes(barId, setMode){
+  document.querySelectorAll('#'+barId+' .mode').forEach(m=>{
+    m.onclick = () => {
+      document.querySelectorAll('#'+barId+' .mode').forEach(x=>x.classList.remove('on'));
+      m.classList.add('on');
+      setMode(m.dataset.mode);
+    };
+  });
+}
+bindModes('yearModeBar', v=>yearMode=v);
+bindModes('monthModeBar', v=>monthMode=v);
+
+// ---- 左栏完整性 → 确认按钮 ----
+['byear','bmonth','bday'].forEach(id=>$(id).addEventListener('input', checkForm));
+$('hourUnknown').addEventListener('change', ()=>{
+  const d = $('hourUnknown').checked;
+  $('bhour').disabled = d; $('bmin').disabled = d;
+  checkForm();
+});
+function checkForm(){
+  const ok = +$('byear').value >= 1900 && +$('bmonth').value >= 1 && +$('bday').value >= 1
+             && (+$('bmonth').value <= 12) && (+$('bday').value <= 31);
+  $('btnConfirm').disabled = !ok;
+  if (ok) $('summary').textContent = '生辰已填好，点「确认生辰」生成右侧年份';
+}
+
+// ---- 确认按钮 → 生成年份网格 ----
+$('btnConfirm').onclick = () => {
+  const y = parseInt($('byear').value);
+  birthYear = y;
+  const err = validate();
+  if (err){ $('errForm').textContent = err; return; }
+  $('errForm').textContent = '';
+  const grid = $('yearsGrid');
+  grid.innerHTML = '';
+  // 区间：出生年为最终节点，往前 20 年；若出生年距今不足 20 年，则从出生年后一直到今年
+  let start, end;
+  if (meta.current_year - y >= 20) { start = meta.current_year - 20; end = meta.current_year; }
+  else { start = y + 1 > meta.current_year ? meta.current_year : y; end = meta.current_year; }
+  for (let yy = start; yy <= end; yy++){
+    const gz = yearGZ(yy);
+    const age = yy - y;
+    const div = document.createElement('div');
+    div.className = 'yn'; div.dataset.year = yy;
+    div.innerHTML = `<div class="y">${yy}</div><div class="g">${gz}${yy===y?' · 出生年':''}</div>`;
+    div.onclick = () => {
+      if (yearMode === 'erase'){ delete div.dataset.state; div.className='yn'; }
+      else if (yearMode === 'good'){ div.dataset.state='good'; div.className='yn on-good'; }
+      else { div.dataset.state='bad'; div.className='yn on-bad'; }
+      updateSummary();
+    };
+    grid.appendChild(div);
+  }
+  confirmed = true;
+  $('btnSubmit').disabled = false;
+  updateSummary();
+};
+
+function validate(){
+  const y=+$('byear').value, m=+$('bmonth').value, d=+$('bday').value;
+  if (y > meta.current_year) return '出生年不能晚于今年';
+  if (m<1||m>12) return '月份需在 1-12';
+  if (d<1||d>31) return '日期需在 1-31';
+  return '';
+}
+
+function yearGZ(y){ const G='甲乙丙丁戊己庚辛壬癸',Z='子丑寅卯辰巳午未申酉戌亥'; const o=(y-4)%60; return G[o%10]+Z[o%12]; }
+
+// ---- 月份网格（始终可用，确认后也随表单提交）----
+(function(){
+  const grid = $('monthsGrid');
+  const MZ = ['寅月(立春起)','卯月','辰月','巳月','午月','未月','申月','酉月','戌月','亥月','子月','丑月'];
+  for (let mm = 1; mm <= 12; mm++){
+    const div = document.createElement('div');
+    div.className = 'mn'; div.dataset.month = mm;
+    div.innerHTML = `<div class="y">${mm}月</div><div class="g">${MZ[mm-1].split('(')[0]}月令</div>`;
+    div.onclick = () => {
+      if (monthMode === 'erase'){ delete div.dataset.state; div.className='mn'; }
+      else if (monthMode === 'good'){ div.dataset.state='good'; div.className='mn on-good'; }
+      else { div.dataset.state='bad'; div.className='mn on-bad'; }
+      updateSummary();
+    };
+    grid.appendChild(div);
+  }
+})();
+
+function updateSummary(){
+  const yg = document.querySelectorAll('.yn[data-state="good"]').length;
+  const yb = document.querySelectorAll('.yn[data-state="bad"]').length;
+  const mg = document.querySelectorAll('.mn[data-state="good"]').length;
+  const mb = document.querySelectorAll('.mn[data-state="bad"]').length;
+  const total = document.querySelectorAll('.yn').length;
+  let parts = [];
+  if (total) parts.push(`年份：顺 ${yg} · 不顺 ${yb}`);
+  if (mg+mb) parts.push(`月份：顺 ${mg} · 不顺 ${mb}`);
+  $('summary').textContent = parts.length ? parts.join('｜') + '（一般无需点选）' : '生辰已填好，点「确认生辰」生成右侧年份';
+}
+
+// ---- 提交 ----
+$('btnSubmit').onclick = async () => {
+  $('errForm').textContent = '';
+  const body = {
+    calendar_type: $('calType').value,
+    is_leap_month: $('leap').value === 'true',
+    year: +$('byear').value, month: +$('bmonth').value, day: +$('bday').value,
+    hour: +($('bhour').value || 12), minute: +($('bmin').value || 0),
+    hour_unknown: $('hourUnknown').checked,
+    gender: $('gender').value, city: $('city').value.trim(),
+    good_years: [...document.querySelectorAll('.yn[data-state="good"]')].map(e=>+e.dataset.year),
+    bad_years: [...document.querySelectorAll('.yn[data-state="bad"]')].map(e=>+e.dataset.year),
+    good_months: [...document.querySelectorAll('.mn[data-state="good"]')].map(e=>+e.dataset.month),
+    bad_months: [...document.querySelectorAll('.mn[data-state="bad"]')].map(e=>+e.dataset.month)
+  };
+  $('btnSubmit').disabled = true; $('btnSubmit').textContent = '排盘中…';
+  try {
+    const r = await fetch('/api/contract', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || '提交失败');
+    $('chartOut').textContent = JSON.stringify(j.chart, null, 2);
+    $('calibOut').textContent = j.calibration ? JSON.stringify(j.calibration, null, 2) : '（未选择顺/不顺年份，仅输出排盘初判）';
+    $('monthsOut').textContent = JSON.stringify(j.months_contract || {good_months: body.good_months, bad_months: body.bad_months}, null, 2);
+    $('resultOverlay').style.display = 'flex';
+  } catch(e){ $('errForm').textContent = e.message; }
+  finally { $('btnSubmit').disabled = false; $('btnSubmit').textContent = '立 约'; }
+};
+
+fetch('/api/meta').then(r=>r.json()).then(m=>meta=m).catch(()=>{});
+</script>
+</body>
+</html>
